@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -144,8 +145,13 @@ function runFetch() {
     return res.json().then(function(data) { return { ok: res.ok, data: data }; });
   }).then(function(r) {
     if (!r.ok) throw new Error(r.data.error || 'Server error');
-    var articles = (r.data.articles || []).filter(function(a) { return a.title; });
-    if (!articles.length) throw new Error('No articles found for this time range.');
+    var cutoff = new Date(Date.now() - days * 86400000);
+    var articles = (r.data.articles || []).filter(function(a) {
+      if (!a.title) return false;
+      if (!a.publishedAt) return true;
+      return new Date(a.publishedAt) >= cutoff;
+    });
+    if (!articles.length) throw new Error('No articles found for this time range. Try a wider range.');
     showStatus('Analysing ' + articles.length + ' articles...');
     var nameMap = {};
     for (var i = 0; i < articles.length; i++) {
