@@ -7,585 +7,279 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #f7f5f0;
-  --card: #ffffff;
-  --ink: #1a1814;
-  --ink2: #5a5650;
-  --ink3: #9a9690;
-  --accent: #c8372d;
-  --accent2: #e8534a;
-  --gold: #b8860b;
-  --border: rgba(0,0,0,0.08);
-  --border2: rgba(0,0,0,0.13);
-  --pos: #1a7a4a;
-  --neu: #7a7875;
-  --neg: #c8372d;
-  --pos-bg: #edf7f1;
-  --neu-bg: #f2f1f0;
-  --neg-bg: #fdf0ef;
-  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
-  --shadow-lg: 0 2px 8px rgba(0,0,0,0.08), 0 12px 40px rgba(0,0,0,0.07);
+  --bg:#f7f5f0; --card:#fff; --ink:#1a1814; --ink2:#5a5650; --ink3:#9a9690;
+  --accent:#c8372d; --accent2:#e8534a; --gold:#b8860b;
+  --border:rgba(0,0,0,0.08); --border2:rgba(0,0,0,0.13);
+  --pos:#1a7a4a; --neu:#7a7875; --neg:#c8372d;
+  --pos-bg:#edf7f1; --neu-bg:#f2f1f0; --neg-bg:#fdf0ef;
+  --shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04);
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:15px;line-height:1.6;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(0,0,0,0.05) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0;}
+.wrap{max-width:780px;margin:0 auto;padding:0 1.25rem 5rem;position:relative;z-index:1;}
 
-body {
-  background: var(--bg);
-  color: var(--ink);
-  font-family: 'Inter', sans-serif;
-  font-size: 15px;
-  line-height: 1.6;
-  min-height: 100vh;
-}
+/* Masthead */
+.masthead{text-align:center;padding:3rem 0 2rem;border-bottom:1.5px solid var(--border2);margin-bottom:2rem;}
+.eyebrow{font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--ink3);margin-bottom:.75rem;}
+h1{font-family:'Playfair Display',serif;font-size:clamp(3rem,8vw,5rem);font-weight:900;line-height:.95;color:var(--ink);letter-spacing:-.02em;margin-bottom:.5rem;}
+h1 em{font-style:italic;color:var(--accent);}
+.sub{font-size:12px;color:var(--ink3);letter-spacing:.05em;text-transform:uppercase;}
 
-/* Subtle dot pattern background */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
-  pointer-events: none;
-  z-index: 0;
-}
+/* Controls */
+.controls{display:flex;align-items:center;justify-content:center;gap:1rem;margin-bottom:2rem;flex-wrap:wrap;}
+.days-wrap{background:var(--card);border:1px solid var(--border2);border-radius:100px;padding:4px;display:flex;gap:2px;box-shadow:var(--shadow);}
+.day-btn{background:none;border:none;border-radius:100px;color:var(--ink2);cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:8px 18px;transition:all .15s;white-space:nowrap;}
+.day-btn:hover{background:#f0ede8;color:var(--ink);}
+.day-btn.active{background:var(--ink);color:#fff;}
+.btn-go{background:var(--accent);border:none;border-radius:100px;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:12px 36px;transition:background .15s,transform .1s;box-shadow:0 2px 12px rgba(200,55,45,0.3);}
+.btn-go:hover{background:var(--accent2);transform:translateY(-1px);}
+.btn-go:active{transform:translateY(0);}
+.btn-go:disabled{background:#bbb;box-shadow:none;cursor:not-allowed;transform:none;}
 
-.wrap {
-  max-width: 780px;
-  margin: 0 auto;
-  padding: 0 1.25rem 5rem;
-  position: relative;
-  z-index: 1;
-}
+/* Status */
+.status{display:none;flex-direction:column;align-items:center;gap:1rem;padding:3rem;text-align:center;}
+.spin{width:36px;height:36px;border:2.5px solid #ddd;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.status p{font-size:14px;color:var(--ink3);}
 
-/* ── Masthead ── */
-.masthead {
-  text-align: center;
-  padding: 3.5rem 0 2.5rem;
-  border-bottom: 1.5px solid var(--border2);
-  margin-bottom: 2.5rem;
-}
-.masthead-tag {
-  font-size: 10px;
-  letter-spacing: .25em;
-  text-transform: uppercase;
-  color: var(--ink3);
-  margin-bottom: 1rem;
-}
-.masthead h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(3rem, 8vw, 5.5rem);
-  font-weight: 900;
-  line-height: .95;
-  color: var(--ink);
-  letter-spacing: -.02em;
-  margin-bottom: .6rem;
-}
-.masthead h1 em {
-  font-style: italic;
-  color: var(--accent);
-}
-.masthead-sub {
-  font-size: 13px;
-  color: var(--ink3);
-  letter-spacing: .04em;
-  text-transform: uppercase;
-}
+/* Error */
+.error{display:none;background:var(--neg-bg);border:1px solid rgba(200,55,45,0.25);border-radius:12px;color:var(--accent);font-size:13px;padding:1rem 1.25rem;margin-bottom:1.5rem;line-height:1.7;}
 
-/* ── Control bar ── */
-.control-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 2.5rem;
-  flex-wrap: wrap;
-}
+/* Metrics */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.75rem;}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.9rem;text-align:center;box-shadow:var(--shadow);}
+.metric-val{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--ink);line-height:1;}
+.metric-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin-top:4px;}
 
-.days-group {
-  display: flex;
-  background: var(--card);
-  border: 1px solid var(--border2);
-  border-radius: 100px;
-  padding: 4px;
-  gap: 2px;
-  box-shadow: var(--shadow);
-}
-.day-btn {
-  background: none;
-  border: none;
-  border-radius: 100px;
-  color: var(--ink2);
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 7px 16px;
-  transition: all .18s;
-  white-space: nowrap;
-}
-.day-btn:hover { background: var(--bg); color: var(--ink); }
-.day-btn.active {
-  background: var(--ink);
-  color: #fff;
-}
+/* Results heading */
+.rhead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1.1rem;flex-wrap:wrap;gap:.5rem;}
+.rtitle{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;}
+.rmeta{font-size:12px;color:var(--ink3);}
 
-.btn-analyse {
-  background: var(--accent);
-  border: none;
-  border-radius: 100px;
-  color: #fff;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 11px 32px;
-  letter-spacing: .01em;
-  transition: background .18s, transform .15s, box-shadow .18s;
-  box-shadow: 0 2px 12px rgba(200,55,45,0.25);
-  white-space: nowrap;
-}
-.btn-analyse:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200,55,45,0.3); }
-.btn-analyse:active { transform: translateY(0); }
-.btn-analyse:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; transform: none; }
+/* Cards */
+.clist{display:flex;flex-direction:column;gap:1px;}
+.ccard{background:var(--card);border:1px solid var(--border);padding:1.25rem 1.5rem;transition:background .15s;animation:up .35s ease both;}
+.ccard:first-child{border-radius:16px 16px 0 0;}
+.ccard:last-child{border-radius:0 0 16px 16px;}
+.ccard:only-child{border-radius:16px;}
+.ccard+.ccard{border-top:none;}
+.ccard:hover{background:#fdfcfb;}
+@keyframes up{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 
-/* ── Status ── */
-.status {
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 3rem;
-  text-align: center;
-}
-.status-spinner {
-  width: 36px; height: 36px;
-  border: 2.5px solid var(--border2);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.status-msg { font-size: 14px; color: var(--ink3); }
-.status-sub { font-size: 12px; color: var(--ink3); opacity: .7; }
+.crow{display:grid;grid-template-columns:2.5rem 1fr auto;align-items:start;gap:12px;margin-bottom:12px;}
+.crank{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--ink3);text-align:center;padding-top:2px;}
+.crank.top{color:var(--accent);}
+.cname{font-size:16px;font-weight:600;color:var(--ink);}
+.cmeta{font-size:12px;color:var(--ink3);margin-top:2px;}
+.cbadge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;border:1px solid var(--border2);color:var(--ink2);white-space:nowrap;}
+.cbadge.top{background:#fff8f0;border-color:rgba(184,134,11,0.3);color:var(--gold);}
 
-/* ── Error ── */
-.error {
-  display: none;
-  background: var(--neg-bg);
-  border: 1px solid rgba(200,55,45,0.2);
-  border-radius: 12px;
-  color: var(--accent);
-  font-size: 13px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.5rem;
-  line-height: 1.7;
-}
+.sbar{display:flex;height:4px;border-radius:4px;overflow:hidden;margin-bottom:8px;background:#eee;}
+.sp{background:var(--pos);} .sn{background:#d0ceca;} .sg{background:var(--neg);}
+.spills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.pill{font-size:11px;font-weight:500;padding:2px 9px;border-radius:100px;}
+.pill-p{background:var(--pos-bg);color:var(--pos);}
+.pill-n{background:var(--neu-bg);color:var(--neu);}
+.pill-g{background:var(--neg-bg);color:var(--neg);}
 
-/* ── Results header ── */
-#results { display: none; }
+.awrap{border-top:1px solid var(--border);padding-top:10px;}
+.albl{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink3);margin-bottom:7px;}
+.arow{display:flex;gap:8px;align-items:baseline;padding:3px 0;}
+.anum{font-size:10px;color:var(--ink3);min-width:14px;text-align:right;flex-shrink:0;}
+.abody{flex:1;min-width:0;}
+.alink{color:var(--ink);font-size:13px;line-height:1.4;text-decoration:none;display:block;}
+.alink:hover{color:var(--accent);text-decoration:underline;text-underline-offset:2px;}
+.asrc{font-size:11px;color:var(--ink3);margin-top:1px;}
+.ahidden{display:none;}
+.xbtn{background:none;border:none;color:var(--ink3);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;padding:6px 0 0;}
+.xbtn:hover{color:var(--accent);}
 
-.results-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-  gap: .5rem;
-}
-.results-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--ink);
-}
-.results-meta { font-size: 12px; color: var(--ink3); }
-
-/* ── Metrics strip ── */
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 2rem;
-}
-.metric {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: .9rem 1rem;
-  text-align: center;
-  box-shadow: var(--shadow);
-}
-.metric-val {
-  font-family: 'Playfair Display', serif;
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--ink);
-  line-height: 1;
-}
-.metric-lbl {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  color: var(--ink3);
-  margin-top: 4px;
-}
-
-/* ── Celebrity cards ── */
-.celeb-list { display: flex; flex-direction: column; gap: 1px; }
-
-.celeb-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  padding: 1.25rem 1.5rem;
-  transition: background .15s;
-  animation: fadeIn .35s ease both;
-  position: relative;
-}
-.celeb-card:first-child { border-radius: 16px 16px 0 0; }
-.celeb-card:last-child  { border-radius: 0 0 16px 16px; }
-.celeb-card:only-child  { border-radius: 16px; }
-.celeb-card + .celeb-card { border-top: none; }
-.celeb-card:hover { background: #fdfcfb; }
-@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-
-.celeb-row {
-  display: grid;
-  grid-template-columns: 2.5rem 1fr auto;
-  align-items: start;
-  gap: 14px;
-  margin-bottom: 12px;
-}
-.celeb-rank {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--ink3);
-  line-height: 1;
-  padding-top: 3px;
-  text-align: center;
-}
-.celeb-rank.top { color: var(--accent); }
-.celeb-name {
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--ink);
-  line-height: 1.2;
-}
-.celeb-meta { font-size: 12px; color: var(--ink3); margin-top: 3px; }
-.celeb-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 100px;
-  border: 1px solid var(--border2);
-  color: var(--ink2);
-  white-space: nowrap;
-  margin-top: 2px;
-}
-.celeb-badge.top { background: #fff8f0; border-color: rgba(184,134,11,0.3); color: var(--gold); }
-
-/* Sentiment bar */
-.sent-track {
-  display: flex;
-  height: 4px;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 8px;
-  background: var(--border);
-}
-.sbar-pos { background: var(--pos); }
-.sbar-neu { background: #d0ceca; }
-.sbar-neg { background: var(--neg); }
-
-.sent-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
-.spill {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 2px 9px;
-  border-radius: 100px;
-}
-.spill-pos { background: var(--pos-bg); color: var(--pos); }
-.spill-neu { background: var(--neu-bg); color: var(--neu); }
-.spill-neg { background: var(--neg-bg); color: var(--neg); }
-
-/* Articles */
-.arts-wrap { border-top: 1px solid var(--border); padding-top: 12px; }
-.arts-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: .12em;
-  color: var(--ink3);
-  margin-bottom: 8px;
-}
-.art-row { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; }
-.art-num {
-  font-size: 10px;
-  color: var(--ink3);
-  min-width: 14px;
-  text-align: right;
-  flex-shrink: 0;
-}
-.art-body { flex: 1; min-width: 0; }
-.art-link {
-  color: var(--ink);
-  font-size: 13px;
-  line-height: 1.4;
-  text-decoration: none;
-  display: block;
-}
-.art-link:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
-.art-src { font-size: 11px; color: var(--ink3); margin-top: 1px; }
-.art-hidden { display: none; }
-.expand-btn {
-  background: none;
-  border: none;
-  color: var(--ink3);
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  cursor: pointer;
-  padding: 6px 0 0;
-  transition: color .15s;
-}
-.expand-btn:hover { color: var(--accent); }
-
-/* ── Footer ── */
-footer {
-  text-align: center;
-  padding: 2rem 0 0;
-  font-size: 11px;
-  color: var(--ink3);
-  border-top: 1px solid var(--border);
-  margin-top: 3rem;
-  letter-spacing: .04em;
-}
-
-@media (max-width: 560px) {
-  .metrics { grid-template-columns: repeat(2,1fr); }
-  .masthead h1 { font-size: 3rem; }
-  .control-bar { flex-direction: column; }
-  .days-group { flex-wrap: wrap; justify-content: center; }
-}
+#results{display:none;}
+footer{text-align:center;padding:2rem 0 0;font-size:11px;color:var(--ink3);border-top:1px solid var(--border);margin-top:3rem;letter-spacing:.04em;}
+@media(max-width:560px){.metrics{grid-template-columns:repeat(2,1fr);}h1{font-size:3rem;}.controls{flex-direction:column;}.days-wrap{flex-wrap:wrap;justify-content:center;}}
 </style>
 </head>
 <body>
 <div class="wrap">
-
-  <!-- Masthead -->
   <header class="masthead">
-    <p class="masthead-tag">Entertainment Intelligence</p>
+    <p class="eyebrow">Entertainment Intelligence</p>
     <h1>Celebrity<br><em>Pulse</em></h1>
-    <p class="masthead-sub">Who's making headlines &amp; how</p>
+    <p class="sub">Who's making headlines &amp; how</p>
   </header>
 
-  <!-- Controls -->
-  <div class="control-bar">
-    <div class="days-group" id="daysGroup">
-      <button class="day-btn" onclick="setDays(1,this)">24 hrs</button>
-      <button class="day-btn" onclick="setDays(3,this)">3 days</button>
-      <button class="day-btn active" onclick="setDays(7,this)">7 days</button>
-      <button class="day-btn" onclick="setDays(14,this)">2 weeks</button>
-      <button class="day-btn" onclick="setDays(30,this)">30 days</button>
+  <div class="controls">
+    <div class="days-wrap">
+      <button class="day-btn" data-days="1" onclick="setDays(1,this)">24 hrs</button>
+      <button class="day-btn" data-days="3" onclick="setDays(3,this)">3 days</button>
+      <button class="day-btn active" data-days="7" onclick="setDays(7,this)">7 days</button>
+      <button class="day-btn" data-days="14" onclick="setDays(14,this)">2 weeks</button>
+      <button class="day-btn" data-days="30" onclick="setDays(30,this)">30 days</button>
     </div>
-    <button class="btn-analyse" id="analyseBtn" onclick="runFetch()">Analyse</button>
+    <button class="btn-go" id="goBtn" onclick="runFetch()">Analyse</button>
   </div>
 
-  <!-- Error -->
-  <div class="error" id="error"></div>
-
-  <!-- Status -->
+  <div class="error" id="err"></div>
   <div class="status" id="status">
-    <div class="status-spinner"></div>
-    <div class="status-msg" id="statusMsg">Fetching articles…</div>
-    <div class="status-sub" id="statusSub"></div>
+    <div class="spin"></div>
+    <p id="stmsg">Fetching articles…</p>
   </div>
 
-  <!-- Results -->
   <div id="results">
-    <div class="results-header">
-      <span class="results-title">This week's rankings</span>
-      <span class="results-meta" id="resultsMeta"></span>
+    <div class="rhead">
+      <span class="rtitle" id="rtitle">Rankings</span>
+      <span class="rmeta" id="rmeta"></span>
     </div>
     <div class="metrics" id="metrics"></div>
-    <div class="celeb-list" id="celebList"></div>
+    <div class="clist" id="clist"></div>
   </div>
 
   <footer>Celebrity Pulse &nbsp;·&nbsp; Powered by NewsAPI</footer>
-
 </div>
+
 <script>
-let selectedDays = 7;
+var days = 7;
 
 function setDays(d, btn) {
-  selectedDays = d;
-  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+  days = d;
+  document.querySelectorAll('.day-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
-  const titles = {1:'Today\'s rankings',3:'Last 3 days\' rankings',7:'This week\'s rankings',14:'Last 2 weeks\' rankings',30:'Last month\'s rankings'};
-  const el = document.getElementById('results');
-  if (el.style.display !== 'none') {
-    document.querySelector('.results-title').textContent = titles[d] || 'Rankings';
-  }
 }
 
-const POS = new Set(['award','won','wins','winner','nominated','nomination','praised','celebrated','amazing','brilliant','stunning','beautiful','gorgeous','talented','successful','hit','blockbuster','love','loved','adored','excited','incredible','wonderful','fantastic','outstanding','best','top','record','milestone','engagement','married','baby','expecting','charity','donated','hero','legend','iconic','comeback','triumph','triumphant','happy','joy','proud','inspiring','congratulations','debut','launch','honored','honoured','voted','cheered','welcomed','surprise','delighted','delight','released','praised']);
-const NEG = new Set(['arrested','sued','lawsuit','controversy','controversial','backlash','scandal','drama','feud','split','divorce','separated','breakup','fired','cancelled','cancel','accused','allegations','dead','death','died','passed','tragedy','tragic','overdose','rehab','addiction','broke','bankrupt','cheating','cheated','affair','exposed','abuse','abusive','violent','assault','racism','racist','offensive','apology','apologized','slammed','blasted','ripped','crash','hospitalized','attacked','threatened','convicted','charged','guilty','sentenced','banned','suspended','meltdown','breakdown','quit','resigned']);
-const STOP = new Set(['the','a','an','in','on','at','to','of','and','or','but','for','with','by','from','as','is','are','was','were','be','been','has','have','had','do','does','did','will','would','could','should','may','might','its','it','this','that','their','they','them','he','she','his','her','we','us','you','after','before','about','into','new','more','how','why','what','when','where','who','says','say','said','over','just','also','up','out','get','now','all','one','two','three','than','then','only','here','there','not','no','so','if','my','your','our','news','star','stars','show','watch','report','video','photos','revealed','reveals','sources','source','reportedly','according','exclusive','breaking','latest','today','year','years','week','day','days','time','back','first','last','next','still','already','ever','inside','amid','during','while','since','despite','us','uk','new','top','big','old','black','white','red','media','social','people','world','life','season']);
+var POS = ['award','won','wins','winner','nominated','nomination','praised','celebrated','amazing','brilliant','stunning','beautiful','gorgeous','talented','successful','hit','blockbuster','love','loved','adored','excited','incredible','wonderful','fantastic','outstanding','best','top','record','milestone','engagement','married','baby','expecting','charity','donated','hero','legend','iconic','comeback','triumph','triumphant','happy','joy','proud','inspiring','congratulations','debut','launch','honored','honoured','voted','cheered','welcomed','surprise','delighted'];
+var NEG = ['arrested','sued','lawsuit','controversy','controversial','backlash','scandal','drama','feud','split','divorce','separated','breakup','fired','cancelled','cancel','accused','allegations','dead','death','died','passed','tragedy','tragic','overdose','rehab','addiction','broke','bankrupt','cheating','cheated','affair','exposed','abuse','abusive','violent','assault','racism','racist','offensive','apology','apologized','slammed','blasted','ripped','crash','hospitalized','attacked','threatened','convicted','charged','guilty','sentenced','banned','suspended'];
+var STOP = ['the','a','an','in','on','at','to','of','and','or','but','for','with','by','from','as','is','are','was','were','be','been','has','have','had','do','does','did','will','would','could','should','may','might','its','it','this','that','their','they','them','he','she','his','her','we','us','you','after','before','about','into','new','more','how','why','what','when','where','who','says','say','said','over','just','also','up','out','get','now','all','one','two','three','than','then','only','here','there','not','no','so','if','my','your','our','news','star','stars','show','watch','report','video','photos','revealed','reveals','sources','source','reportedly','according','exclusive','breaking','latest','today','year','years','week','day','days','time','back','first','last','next','still','already','ever','inside','amid','during','while','since','despite','us','uk','top','big','old','black','white','red','media','social','people','world','life','season'];
 
 function extractNames(text) {
   if (!text) return [];
-  const m = text.match(/\b([A-Z][a-z]{1,20})(\s[A-Z][a-z]{1,20}){1,2}\b/g) || [];
-  return [...new Set(m.filter(n => n.split(' ').every(p => !STOP.has(p.toLowerCase()) && p.length > 1)))];
+  var m = text.match(/\b([A-Z][a-z]{1,20})(\s[A-Z][a-z]{1,20}){1,2}\b/g) || [];
+  var seen = {};
+  return m.filter(function(n) {
+    if (seen[n]) return false;
+    seen[n] = true;
+    return n.split(' ').every(function(p){ return STOP.indexOf(p.toLowerCase()) === -1 && p.length > 1; });
+  });
 }
 
-function scoreSentiment(text) {
-  const words = (text||'').toLowerCase().split(/\W+/);
-  let pos=0, neg=0;
-  words.forEach(w=>{ if(POS.has(w)) pos++; if(NEG.has(w)) neg++; });
-  if (!pos && !neg) return {positive:10,neutral:80,negative:10,label:'neutral'};
-  const t = pos+neg;
-  const p = Math.round(pos/t*100), n = Math.round(neg/t*100);
-  return {positive:p, neutral:Math.max(0,100-p-n), negative:n, label:p>n?'positive':n>p?'negative':'neutral'};
+function sentiment(text) {
+  var words = (text||'').toLowerCase().split(/\W+/);
+  var p=0, n=0;
+  words.forEach(function(w){ if(POS.indexOf(w)>-1) p++; if(NEG.indexOf(w)>-1) n++; });
+  if (!p && !n) return {positive:10,neutral:80,negative:10,label:'neutral'};
+  var t=p+n, pp=Math.round(p/t*100), nn=Math.round(n/t*100);
+  return {positive:pp, neutral:Math.max(0,100-pp-nn), negative:nn, label:pp>nn?'positive':nn>pp?'negative':'neutral'};
 }
 
-function showStatus(msg, sub='') {
-  document.getElementById('status').style.display='flex';
-  document.getElementById('statusMsg').textContent=msg;
-  document.getElementById('statusSub').textContent=sub;
-}
-function hideStatus() { document.getElementById('status').style.display='none'; }
-function showError(msg) { const e=document.getElementById('error'); e.style.display='block'; e.innerHTML=msg; }
-function hideError() { document.getElementById('error').style.display='none'; }
+function showStatus(msg){ document.getElementById('status').style.display='flex'; document.getElementById('stmsg').textContent=msg; }
+function hideStatus(){ document.getElementById('status').style.display='none'; }
+function showErr(msg){ var e=document.getElementById('err'); e.style.display='block'; e.innerHTML=msg; }
+function hideErr(){ document.getElementById('err').style.display='none'; }
 
-async function runFetch() {
-  hideError();
+function runFetch() {
+  hideErr();
   document.getElementById('results').style.display='none';
-  const btn = document.getElementById('analyseBtn');
+  var btn = document.getElementById('goBtn');
   btn.disabled = true;
 
-  const from = new Date(Date.now()-selectedDays*86400000).toISOString().split('T')[0];
-  const q    = 'celebrity OR actor OR actress OR singer OR musician OR athlete';
-  const params = new URLSearchParams({q, from, pageSize:'100'});
+  var from = new Date(Date.now()-days*86400000).toISOString().split('T')[0];
+  var q = 'celebrity OR actor OR actress OR singer OR musician';
+  var url = '/api/news?q='+encodeURIComponent(q)+'&from='+from+'&pageSize=100';
 
-  showStatus('Fetching latest celebrity news…', 'Scanning 100 articles');
-  let articles = [];
-  try {
-    const res  = await fetch(`/api/news?${params}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Server error');
-    articles = (data.articles||[]).filter(a => a.title && a.description);
-    if (!articles.length) throw new Error('No articles found. Try a wider time range.');
-  } catch(e) {
-    hideStatus(); btn.disabled=false;
-    showError(e.message); return;
-  }
+  showStatus('Fetching articles…');
 
-  showStatus('Identifying celebrities…', `Processing ${articles.length} articles`);
-  await new Promise(r => setTimeout(r, 0));
+  fetch(url)
+    .then(function(res){ return res.json().then(function(data){ return {ok:res.ok, data:data}; }); })
+    .then(function(r) {
+      if (!r.ok) throw new Error(r.data.error || 'Server error — check your API key in Vercel settings');
+      var articles = (r.data.articles||[]).filter(function(a){ return a.title && a.description; });
+      if (!articles.length) throw new Error('No articles found. Try a wider time range.');
 
-  const nameMap = {};
-  articles.forEach(article => {
-    const text  = (article.title||'')+' '+(article.description||'');
-    const names = extractNames(text);
-    const sent  = scoreSentiment(text);
-    names.forEach(name => {
-      const key = name.toLowerCase();
-      if (!nameMap[key]) nameMap[key]={name,mentions:0,pos:0,neu:0,neg:0,articles:[]};
-      nameMap[key].mentions++;
-      nameMap[key].pos+=sent.positive;
-      nameMap[key].neu+=sent.neutral;
-      nameMap[key].neg+=sent.negative;
-      if (!nameMap[key].articles.some(a=>a.url===article.url) && nameMap[key].articles.length<5) {
-        nameMap[key].articles.push({title:article.title,url:article.url,source:article.source?.name||'',sentiment:sent.label});
-      }
-    });
-  });
+      showStatus('Analysing ' + articles.length + ' articles…');
 
-  const celebs = Object.values(nameMap)
-    .filter(c=>c.mentions>=2)
-    .map(c=>{
-      const t=c.pos+c.neu+c.neg||1;
-      const p=Math.round(c.pos/t*100), n=Math.round(c.neg/t*100);
-      return {...c, sentiment:{positive:p,neutral:Math.max(0,100-p-n),negative:n}};
+      var nameMap = {};
+      articles.forEach(function(article) {
+        var text = (article.title||'')+' '+(article.description||'');
+        var names = extractNames(text);
+        var sent = sentiment(text);
+        names.forEach(function(name) {
+          var key = name.toLowerCase();
+          if (!nameMap[key]) nameMap[key]={name:name,mentions:0,pos:0,neu:0,neg:0,articles:[]};
+          nameMap[key].mentions++;
+          nameMap[key].pos+=sent.positive;
+          nameMap[key].neu+=sent.neutral;
+          nameMap[key].neg+=sent.negative;
+          if (!nameMap[key].articles.some(function(a){return a.url===article.url;}) && nameMap[key].articles.length<5) {
+            nameMap[key].articles.push({title:article.title,url:article.url,source:(article.source&&article.source.name)||'',sentiment:sent.label});
+          }
+        });
+      });
+
+      var celebs = Object.values(nameMap)
+        .filter(function(c){return c.mentions>=2;})
+        .map(function(c){
+          var t=c.pos+c.neu+c.neg||1;
+          var p=Math.round(c.pos/t*100), n=Math.round(c.neg/t*100);
+          return Object.assign({},c,{sentiment:{positive:p,neutral:Math.max(0,100-p-n),negative:n}});
+        })
+        .sort(function(a,b){return b.mentions-a.mentions;})
+        .slice(0,20);
+
+      hideStatus(); btn.disabled=false;
+      if (!celebs.length) { showErr('No celebrities found. Try a wider time range.'); return; }
+      render(celebs, articles.length);
     })
-    .sort((a,b)=>b.mentions-a.mentions)
-    .slice(0,20);
-
-  hideStatus(); btn.disabled=false;
-
-  if (!celebs.length) {
-    showError('No celebrities with multiple mentions found. Try a wider time range.'); return;
-  }
-  renderResults(celebs, articles.length);
+    .catch(function(e){
+      hideStatus(); btn.disabled=false;
+      showErr(e.message);
+    });
 }
 
-function renderResults(celebs, totalArticles) {
-  const totalMentions = celebs.reduce((s,c)=>s+c.mentions,0);
-  const posCount = celebs.filter(c=>c.sentiment.positive>50).length;
-  const negCount = celebs.filter(c=>c.sentiment.negative>50).length;
-  const titleMap = {1:"Today's rankings",3:"Last 3 days",7:"This week's rankings",14:"Last 2 weeks",30:"Last month"};
+function render(celebs, total) {
+  var tm = celebs.reduce(function(s,c){return s+c.mentions;},0);
+  var pc = celebs.filter(function(c){return c.sentiment.positive>50;}).length;
+  var nc = celebs.filter(function(c){return c.sentiment.negative>50;}).length;
+  var titles = {1:"Today's rankings",3:"Last 3 days",7:"This week",14:"Last 2 weeks",30:"Last 30 days"};
+  document.getElementById('rtitle').textContent = titles[days]||'Rankings';
+  document.getElementById('rmeta').textContent = total+' articles scanned';
+  document.getElementById('metrics').innerHTML =
+    '<div class="metric"><div class="metric-val">'+celebs.length+'</div><div class="metric-lbl">Celebrities</div></div>'+
+    '<div class="metric"><div class="metric-val">'+tm+'</div><div class="metric-lbl">Mentions</div></div>'+
+    '<div class="metric"><div class="metric-val">'+total+'</div><div class="metric-lbl">Articles</div></div>'+
+    '<div class="metric"><div class="metric-val">'+pc+'</div><div class="metric-lbl">Positive</div></div>';
 
-  document.querySelector('.results-title').textContent = titleMap[selectedDays]||'Rankings';
-  document.getElementById('resultsMeta').textContent = `${totalArticles} articles scanned`;
-
-  document.getElementById('metrics').innerHTML=`
-    <div class="metric"><div class="metric-val">${celebs.length}</div><div class="metric-lbl">Celebrities</div></div>
-    <div class="metric"><div class="metric-val">${totalMentions}</div><div class="metric-lbl">Mentions</div></div>
-    <div class="metric"><div class="metric-val">${posCount}</div><div class="metric-lbl">Positive coverage</div></div>
-    <div class="metric"><div class="metric-val">${negCount}</div><div class="metric-lbl">Negative coverage</div></div>`;
-
-  const list = document.getElementById('celebList');
+  var list = document.getElementById('clist');
   list.innerHTML = '';
-
-  celebs.forEach((c,i) => {
-    const isTop = i<3;
-    const {positive:p,neutral:n,negative:neg} = c.sentiment;
-    const arts = c.articles.slice(0,5);
-    const card = document.createElement('div');
-    card.className = 'celeb-card';
-    card.style.animationDelay = (i*40)+'ms';
-    card.innerHTML = `
-      <div class="celeb-row">
-        <div class="celeb-rank ${isTop?'top'}">${i+1}</div>
-        <div>
-          <div class="celeb-name">${c.name}</div>
-          <div class="celeb-meta">${c.mentions} mention${c.mentions!==1?'s':''} in ${arts.length} article${arts.length!==1?'s':''}</div>
-        </div>
-        <div class="celeb-badge ${isTop?'top':''}">${isTop?'★ Top story':'#'+(i+1)}</div>
-      </div>
-      <div class="sent-track">
-        <div class="sbar-pos" style="flex:${p}"></div>
-        <div class="sbar-neu" style="flex:${n}"></div>
-        <div class="sbar-neg" style="flex:${neg}"></div>
-      </div>
-      <div class="sent-row">
-        <span class="spill spill-pos">↑ ${p}% positive</span>
-        <span class="spill spill-neu">· ${n}% neutral</span>
-        <span class="spill spill-neg">↓ ${neg}% negative</span>
-      </div>
-      <div class="arts-wrap">
-        <div class="arts-label">Articles</div>
-        <div class="art-list" id="arts-${i}">
-          ${arts.map((a,j)=>`
-            <div class="art-row${j>=3?' art-hidden':''}">
-              <span class="art-num">${j+1}</span>
-              <div class="art-body">
-                <a class="art-link" href="${a.url}" target="_blank" rel="noopener">${a.title}</a>
-                <div class="art-src">${a.source}</div>
-              </div>
-            </div>`).join('')}
-        </div>
-        ${arts.length>3?`<button class="expand-btn" onclick="toggleArts(${i},this,${arts.length})">+ Show all ${arts.length} articles</button>`:''}
-      </div>`;
+  celebs.forEach(function(c,i){
+    var isTop = i<3;
+    var p=c.sentiment.positive, n=c.sentiment.neutral, g=c.sentiment.negative;
+    var arts=c.articles.slice(0,5);
+    var card=document.createElement('div');
+    card.className='ccard';
+    card.style.animationDelay=(i*40)+'ms';
+    var artRows = arts.map(function(a,j){
+      return '<div class="arow'+(j>=3?' ahidden':'')+'"><span class="anum">'+(j+1)+'</span><div class="abody"><a class="alink" href="'+a.url+'" target="_blank" rel="noopener">'+a.title+'</a><div class="asrc">'+a.source+'</div></div></div>';
+    }).join('');
+    var xbtn = arts.length>3 ? '<button class="xbtn" onclick="toggleArts('+i+',this,'+arts.length+')">+ Show all '+arts.length+' articles</button>' : '';
+    card.innerHTML =
+      '<div class="crow">'+
+        '<div class="crank '+(isTop?'top':'')">'+(i+1)+'</div>'+
+        '<div><div class="cname">'+c.name+'</div><div class="cmeta">'+c.mentions+' mention'+(c.mentions!==1?'s':'')+' · '+arts.length+' article'+(arts.length!==1?'s':'')+'</div></div>'+
+        '<div class="cbadge '+(isTop?'top':'')+'>'+(isTop?'★ Top':'#'+(i+1))+'</div>'+
+      '</div>'+
+      '<div class="sbar"><div class="sp" style="flex:'+p+'"></div><div class="sn" style="flex:'+n+'"></div><div class="sg" style="flex:'+g+'"></div></div>'+
+      '<div class="spills"><span class="pill pill-p">↑ '+p+'% positive</span><span class="pill pill-n">· '+n+'% neutral</span><span class="pill pill-g">↓ '+g+'% negative</span></div>'+
+      '<div class="awrap"><div class="albl">Articles</div><div class="alist" id="al'+i+'">'+artRows+'</div>'+xbtn+'</div>';
     list.appendChild(card);
   });
-
   document.getElementById('results').style.display='block';
 }
 
 function toggleArts(i,btn,total){
-  const items=[...document.querySelectorAll(`#arts-${i} .art-row`)];
-  const collapsed=items.some(el=>el.classList.contains('art-hidden'));
-  items.forEach((el,j)=>{if(j>=3)el.classList.toggle('art-hidden',!collapsed);});
-  btn.textContent=collapsed?'− Show less':`+ Show all ${total} articles`;
+  var items=document.querySelectorAll('#al'+i+' .arow');
+  var collapsed=false;
+  items.forEach(function(el){if(el.classList.contains('ahidden'))collapsed=true;});
+  items.forEach(function(el,j){if(j>=3)el.classList.toggle('ahidden',!collapsed);});
+  btn.textContent=collapsed?'− Show less':'+ Show all '+total+' articles';
 }
 </script>
 </body>
