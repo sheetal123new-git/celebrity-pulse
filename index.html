@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Celebrity Pulse v2</title>
+<title>Celebrity Pulse</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f7f5f0;--card:#fff;--ink:#1a1814;--ink2:#5a5650;--ink3:#9a9690;--accent:#c8372d;--accent2:#e8534a;--gold:#b8860b;--border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.13);--pos:#1a7a4a;--neu:#7a7875;--neg:#c8372d;--pos-bg:#edf7f1;--neu-bg:#f2f1f0;--neg-bg:#fdf0ef;}
@@ -76,6 +76,181 @@ td.sent{text-align:right;}
 footer{text-align:center;padding:2rem 0 0;font-size:11px;color:var(--ink3);border-top:1px solid var(--border);margin-top:3rem;}
 @media(max-width:620px){.metrics{grid-template-columns:repeat(2,1fr);}h1{font-size:3rem;}.controls{flex-direction:column;}.days-wrap{flex-wrap:wrap;justify-content:center;}td.bar-cell{display:none;}thead th.bar-h{display:none;}}
 </style>
+<script>
+var days = 7;
+
+var POS_WORDS = 'award,won,wins,winner,nominated,nomination,praised,celebrated,amazing,brilliant,stunning,beautiful,gorgeous,talented,successful,hit,blockbuster,love,loved,adored,excited,incredible,wonderful,fantastic,outstanding,best,top,record,milestone,engagement,married,baby,expecting,charity,donated,hero,legend,iconic,comeback,triumph,triumphant,happy,joy,proud,inspiring,congratulations,debut,launch,honored,honoured,voted,cheered,welcomed,surprise,delighted'.split(',');
+var NEG_WORDS = 'arrested,sued,lawsuit,controversy,controversial,backlash,scandal,drama,feud,split,divorce,separated,breakup,fired,cancelled,cancel,accused,allegations,dead,death,died,passed,tragedy,tragic,overdose,rehab,addiction,broke,bankrupt,cheating,cheated,affair,exposed,abuse,abusive,violent,assault,racism,racist,offensive,apology,apologized,slammed,blasted,ripped,crash,hospitalized,attacked,threatened,convicted,charged,guilty,sentenced,banned,suspended'.split(',');
+var STOP_WORDS = 'the,a,an,in,on,at,to,of,and,or,but,for,with,by,from,as,is,are,was,were,be,been,has,have,had,do,does,did,will,would,could,should,may,might,its,it,this,that,their,they,them,he,she,his,her,we,us,you,after,before,about,into,new,more,how,why,what,when,where,who,says,say,said,over,just,also,up,out,get,now,all,one,two,three,than,then,only,here,there,not,no,so,if,my,your,our,news,star,stars,show,watch,report,video,photos,revealed,reveals,sources,source,reportedly,according,exclusive,breaking,latest,today,year,years,week,day,days,time,back,first,last,next,still,already,ever,inside,amid,during,while,since,despite,us,uk,top,big,old,black,white,red,media,social,people,world,life,season,review,film,album,book,series,guardian,press,associated,reuters,monday,tuesday,wednesday,thursday,friday,saturday,sunday'.split(',');
+
+function setDays(d, btn) {
+  days = d;
+  var btns = document.querySelectorAll('.day-btn');
+  for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('active'); }
+  btn.classList.add('active');
+}
+
+function extractNames(text) {
+  if (!text) return [];
+  var m = text.match(/\b([A-Z][a-z]{1,20})(\s[A-Z][a-z]{1,20}){1,2}\b/g) || [];
+  var seen = {};
+  var result = [];
+  for (var i = 0; i < m.length; i++) {
+    var name = m[i];
+    if (seen[name]) continue;
+    seen[name] = true;
+    var parts = name.split(' ');
+    var ok = true;
+    for (var j = 0; j < parts.length; j++) {
+      if (STOP_WORDS.indexOf(parts[j].toLowerCase()) !== -1 || parts[j].length <= 1) { ok = false; break; }
+    }
+    if (ok) result.push(name);
+  }
+  return result;
+}
+
+function getSentiment(text) {
+  var words = (text || '').toLowerCase().split(/\W+/);
+  var p = 0, n = 0;
+  for (var i = 0; i < words.length; i++) {
+    if (POS_WORDS.indexOf(words[i]) !== -1) p++;
+    if (NEG_WORDS.indexOf(words[i]) !== -1) n++;
+  }
+  if (!p && !n) return { positive: 10, neutral: 80, negative: 10, label: 'neutral' };
+  var t = p + n;
+  var pp = Math.round(p / t * 100);
+  var nn = Math.round(n / t * 100);
+  return { positive: pp, neutral: Math.max(0, 100 - pp - nn), negative: nn, label: pp > nn ? 'positive' : nn > pp ? 'negative' : 'neutral' };
+}
+
+function showStatus(msg) { document.getElementById('status').style.display = 'flex'; document.getElementById('stmsg').textContent = msg; }
+function hideStatus() { document.getElementById('status').style.display = 'none'; }
+function showErr(msg) { var e = document.getElementById('err'); e.style.display = 'block'; e.innerHTML = msg; }
+function hideErr() { document.getElementById('err').style.display = 'none'; }
+
+function toDateStr(d) { return d.toISOString().split('T')[0]; }
+
+function runFetch() {
+  hideErr();
+  document.getElementById('results').style.display = 'none';
+  var btn = document.getElementById('goBtn');
+  btn.disabled = true;
+  var now  = new Date();
+  var from = toDateStr(new Date(Date.now() - days * 86400000));
+  var to   = toDateStr(now);
+  var url  = '/api/news?from=' + from + '&to=' + to;
+  showStatus('Fetching articles from The Guardian...');
+  fetch(url).then(function(res) {
+    return res.json().then(function(data) { return { ok: res.ok, data: data }; });
+  }).then(function(r) {
+    if (!r.ok) throw new Error(r.data.error || 'Server error');
+    var articles = (r.data.articles || []).filter(function(a) { return a.title; });
+    if (!articles.length) throw new Error('No articles found for this time range.');
+    showStatus('Analysing ' + articles.length + ' articles...');
+    var nameMap = {};
+    for (var i = 0; i < articles.length; i++) {
+      var article = articles[i];
+      var text = (article.title || '') + ' ' + (article.description || '');
+      var names = extractNames(text);
+      var sent = getSentiment(text);
+      for (var j = 0; j < names.length; j++) {
+        var name = names[j];
+        var key = name.toLowerCase();
+        if (!nameMap[key]) nameMap[key] = { name: name, mentions: 0, pos: 0, neu: 0, neg: 0, articles: [] };
+        nameMap[key].mentions++;
+        nameMap[key].pos += sent.positive;
+        nameMap[key].neu += sent.neutral;
+        nameMap[key].neg += sent.negative;
+        var alreadyHas = false;
+        for (var k = 0; k < nameMap[key].articles.length; k++) {
+          if (nameMap[key].articles[k].url === article.url) { alreadyHas = true; break; }
+        }
+        if (!alreadyHas && nameMap[key].articles.length < 5) {
+          nameMap[key].articles.push({ title: article.title, url: article.url, source: 'The Guardian', sentiment: sent.label });
+        }
+      }
+    }
+    var keys = Object.keys(nameMap);
+    var celebs = [];
+    for (var i = 0; i < keys.length; i++) {
+      var c = nameMap[keys[i]];
+      var t = c.pos + c.neu + c.neg || 1;
+      var pp = Math.round(c.pos / t * 100);
+      var nn = Math.round(c.neg / t * 100);
+      celebs.push({ name: c.name, mentions: c.mentions, articles: c.articles, sentiment: { positive: pp, neutral: Math.max(0, 100 - pp - nn), negative: nn } });
+    }
+    celebs.sort(function(a, b) { return b.mentions - a.mentions; });
+    celebs = celebs.slice(0, 25);
+    hideStatus();
+    btn.disabled = false;
+    if (!celebs.length) { showErr('No celebrities identified. Try a wider time range.'); return; }
+    render(celebs, articles.length);
+  }).catch(function(e) {
+    hideStatus();
+    btn.disabled = false;
+    showErr(e.message);
+  });
+}
+
+function render(celebs, total) {
+  var tm = 0;
+  for (var i = 0; i < celebs.length; i++) tm += celebs[i].mentions;
+  var pc = 0;
+  for (var i = 0; i < celebs.length; i++) { if (celebs[i].sentiment.positive > 50) pc++; }
+  var titles = { 1: "Today's rankings", 3: "Last 3 days", 7: "This week", 14: "Last 2 weeks", 30: "Last 30 days" };
+  document.getElementById('rtitle').textContent = titles[days] || 'Rankings';
+  document.getElementById('rmeta').textContent = total + ' articles scanned';
+  document.getElementById('metrics').innerHTML =
+    '<div class="metric"><div class="metric-val">' + celebs.length + '</div><div class="metric-lbl">Celebrities</div></div>' +
+    '<div class="metric"><div class="metric-val">' + tm + '</div><div class="metric-lbl">Mentions</div></div>' +
+    '<div class="metric"><div class="metric-val">' + total + '</div><div class="metric-lbl">Articles</div></div>' +
+    '<div class="metric"><div class="metric-val">' + pc + '</div><div class="metric-lbl">Positive</div></div>';
+  var tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  for (var i = 0; i < celebs.length; i++) {
+    var c = celebs[i];
+    var isTop = i < 3;
+    var p = c.sentiment.positive, n = c.sentiment.neutral, g = c.sentiment.negative;
+    var arts = c.articles;
+    var coverageLabel = p > g ? 'Positive' : g > p ? 'Negative' : 'Neutral';
+    var coverageClass = p > g ? 'pill pill-p' : g > p ? 'pill pill-g' : 'pill pill-n';
+    var expandId = 'expand-' + i;
+    var tr = document.createElement('tr');
+    tr.style.animationDelay = (i * 30) + 'ms';
+    tr.innerHTML =
+      '<td class="rank' + (isTop ? ' top' : '') + '">' + (i + 1) + '</td>' +
+      '<td class="name"><div>' + c.name + '</div><div class="name-sub">' + arts.length + ' article' + (arts.length !== 1 ? 's' : '') + '</div></td>' +
+      '<td class="mentions">' + c.mentions + '</td>' +
+      '<td class="bar-cell"><div class="mini-bar"><div class="mb-p" style="flex:' + p + '"></div><div class="mb-n" style="flex:' + n + '"></div><div class="mb-g" style="flex:' + g + '"></div></div></td>' +
+      '<td class="sent"><span class="' + coverageClass + '">' + coverageLabel + '</span></td>' +
+      '<td><button class="toggle-btn" onclick="toggleRow(\'' + expandId + '\',this)">Articles</button></td>';
+    tbody.appendChild(tr);
+    var artHTML = '';
+    for (var j = 0; j < arts.length; j++) {
+      artHTML += '<div class="art-item"><span class="art-num">' + (j + 1) + '</span>' +
+        '<a class="art-link" href="' + arts[j].url + '" target="_blank" rel="noopener">' + arts[j].title + '</a>' +
+        '<span class="art-src">' + arts[j].source + '</span></div>';
+    }
+    var expandTr = document.createElement('tr');
+    expandTr.className = 'expand-row';
+    expandTr.id = expandId;
+    expandTr.innerHTML = '<td colspan="6"><div class="expand-inner"><div class="arts-label">Related articles</div>' + artHTML + '</div></td>';
+    tbody.appendChild(expandTr);
+  }
+  document.getElementById('results').style.display = 'block';
+}
+
+function toggleRow(id, btn) {
+  var row = document.getElementById(id);
+  if (row.style.display === 'table-row') {
+    row.style.display = 'none';
+    btn.textContent = 'Articles';
+  } else {
+    row.style.display = 'table-row';
+    btn.textContent = 'Hide';
+  }
+}
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -123,169 +298,5 @@ footer{text-align:center;padding:2rem 0 0;font-size:11px;color:var(--ink3);borde
   </div>
   <footer>Celebrity Pulse &middot; Powered by The Guardian</footer>
 </div>
-<script>
-var days = 7;
-
-function setDays(d, btn) {
-  days = d;
-  var btns = document.querySelectorAll('.day-btn');
-  for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('active'); }
-  btn.classList.add('active');
-}
-
-var POS_WORDS = 'award,won,wins,winner,nominated,nomination,praised,celebrated,amazing,brilliant,stunning,beautiful,gorgeous,talented,successful,hit,blockbuster,love,loved,adored,excited,incredible,wonderful,fantastic,outstanding,best,top,record,milestone,engagement,married,baby,expecting,charity,donated,hero,legend,iconic,comeback,triumph,triumphant,happy,joy,proud,inspiring,congratulations,debut,launch,honored,honoured,voted,cheered,welcomed,surprise,delighted'.split(',');
-var NEG_WORDS = 'arrested,sued,lawsuit,controversy,controversial,backlash,scandal,drama,feud,split,divorce,separated,breakup,fired,cancelled,cancel,accused,allegations,dead,death,died,passed,tragedy,tragic,overdose,rehab,addiction,broke,bankrupt,cheating,cheated,affair,exposed,abuse,abusive,violent,assault,racism,racist,offensive,apology,apologized,slammed,blasted,ripped,crash,hospitalized,attacked,threatened,convicted,charged,guilty,sentenced,banned,suspended'.split(',');
-var STOP_WORDS = 'the,a,an,in,on,at,to,of,and,or,but,for,with,by,from,as,is,are,was,were,be,been,has,have,had,do,does,did,will,would,could,should,may,might,its,it,this,that,their,they,them,he,she,his,her,we,us,you,after,before,about,into,new,more,how,why,what,when,where,who,says,say,said,over,just,also,up,out,get,now,all,one,two,three,than,then,only,here,there,not,no,so,if,my,your,our,news,star,stars,show,watch,report,video,photos,revealed,reveals,sources,source,reportedly,according,exclusive,breaking,latest,today,year,years,week,day,days,time,back,first,last,next,still,already,ever,inside,amid,during,while,since,despite,us,uk,top,big,old,black,white,red,media,social,people,world,life,season,review,film,album,book,series,guardian,press,associated,reuters,monday,tuesday,wednesday,thursday,friday,saturday,sunday'.split(',');
-
-function extractNames(text) {
-  if (!text) return [];
-  var m = text.match(/\b([A-Z][a-z]{1,20})(\s[A-Z][a-z]{1,20}){1,2}\b/g) || [];
-  var seen = {};
-  var result = [];
-  for (var i = 0; i < m.length; i++) {
-    var name = m[i];
-    if (seen[name]) continue;
-    seen[name] = true;
-    var parts = name.split(' ');
-    var ok = true;
-    for (var j = 0; j < parts.length; j++) {
-      if (STOP_WORDS.indexOf(parts[j].toLowerCase()) !== -1 || parts[j].length <= 1) { ok = false; break; }
-    }
-    if (ok) result.push(name);
-  }
-  return result;
-}
-
-function getSentiment(text) {
-  var words = (text || '').toLowerCase().split(/\W+/);
-  var p = 0, n = 0;
-  for (var i = 0; i < words.length; i++) {
-    if (POS_WORDS.indexOf(words[i]) !== -1) p++;
-    if (NEG_WORDS.indexOf(words[i]) !== -1) n++;
-  }
-  if (!p && !n) return { positive: 10, neutral: 80, negative: 10, label: 'neutral' };
-  var t = p + n;
-  var pp = Math.round(p / t * 100);
-  var nn = Math.round(n / t * 100);
-  return { positive: pp, neutral: Math.max(0, 100 - pp - nn), negative: nn, label: pp > nn ? 'positive' : nn > pp ? 'negative' : 'neutral' };
-}
-
-function showStatus(msg) { document.getElementById('status').style.display = 'flex'; document.getElementById('stmsg').textContent = msg; }
-function hideStatus() { document.getElementById('status').style.display = 'none'; }
-function showErr(msg) { var e = document.getElementById('err'); e.style.display = 'block'; e.innerHTML = msg; }
-function hideErr() { document.getElementById('err').style.display = 'none'; }
-
-function toDateStr(d) {
-  return d.toISOString().split('T')[0];
-}
-
-function runFetch() {
-  hideErr();
-  document.getElementById('results').style.display = 'none';
-  var btn = document.getElementById('goBtn');
-  btn.disabled = true;
-
-  var now  = new Date();
-  var from = toDateStr(new Date(Date.now() - days * 86400000));
-  var to   = toDateStr(now);
-  var url  = '/api/news?from=' + from + '&to=' + to;
-
-  showStatus('Fetching articles from The Guardian...');
-  fetch(url).then(function(res) {
-    return res.json().then(function(data) { return { ok: res.ok, data: data }; });
-  }).then(function(r) {
-    if (!r.ok) throw new Error(r.data.error || 'Server error');
-    var articles = (r.data.articles || []).filter(function(a) { return a.title; });
-    if (!articles.length) throw new Error('No articles found for this time range.');
-    showStatus('Analysing ' + articles.length + ' articles...');
-
-    var nameMap = {};
-    for (var i = 0; i < articles.length; i++) {
-      var article = articles[i];
-      var text = (article.title || '') + ' ' + (article.description || '');
-      var names = extractNames(text);
-      var sent = getSentiment(text);
-      for (var j = 0; j < names.length; j++) {
-        var name = names[j];
-        var key = name.toLowerCase();
-        if (!nameMap[key]) nameMap[key] = { name: name, mentions: 0, pos: 0, neu: 0, neg: 0, articles: [] };
-        nameMap[key].mentions++;
-        nameMap[key].pos += sent.positive;
-        nameMap[key].neu += sent.neutral;
-        nameMap[key].neg += sent.negative;
-        var alreadyHas = false;
-        for (var k = 0; k < nameMap[key].articles.length; k++) {
-          if (nameMap[key].articles[k].url === article.url) { alreadyHas = true; break; }
-        }
-        if (!alreadyHas && nameMap[key].articles.length < 5) {
-          nameMap[key].articles.push({ title: article.title, url: article.url, source: 'The Guardian', sentiment: sent.label });
-        }
-      }
-    }
-
-    var keys = Object.keys(nameMap);
-    var celebs = [];
-    for (var i = 0; i < keys.length; i++) {
-      var c = nameMap[keys[i]];
-      var t = c.pos + c.neu + c.neg || 1;
-      var pp = Math.round(c.pos / t * 100);
-      var nn = Math.round(c.neg / t * 100);
-      celebs.push({ name: c.name, mentions: c.mentions, articles: c.articles, sentiment: { positive: pp, neutral: Math.max(0, 100 - pp - nn), negative: nn } });
-    }
-    celebs.sort(function(a, b) { return b.mentions - a.mentions; });
-    celebs = celebs.slice(0, 25);
-
-    hideStatus();
-    btn.disabled = false;
-    if (!celebs.length) { showErr('No celebrities identified. Try a wider time range.'); return; }
-    render(celebs, articles.length);
-  }).catch(function(e) {
-    hideStatus();
-    btn.disabled = false;
-    showErr(e.message);
-  });
-}
-
-function render(celebs, total) {
-  var tm = 0;
-  for (var i = 0; i < celebs.length; i++) tm += celebs[i].mentions;
-  var pc = 0, nc = 0;
-  for (var i = 0; i < celebs.length; i++) {
-    if (celebs[i].sentiment.positive > 50) pc++;
-    if (celebs[i].sentiment.negative > 50) nc++;
-  }
-  var titles = { 1: "Today's rankings", 3: "Last 3 days", 7: "This week", 14: "Last 2 weeks", 30: "Last 30 days" };
-  document.getElementById('rtitle').textContent = titles[days] || 'Rankings';
-  document.getElementById('rmeta').textContent = total + ' articles scanned';
-  document.getElementById('metrics').innerHTML =
-    '<div class="metric"><div class="metric-val">' + celebs.length + '</div><div class="metric-lbl">Celebrities</div></div>' +
-    '<div class="metric"><div class="metric-val">' + tm + '</div><div class="metric-lbl">Mentions</div></div>' +
-    '<div class="metric"><div class="metric-val">' + total + '</div><div class="metric-lbl">Articles</div></div>' +
-    '<div class="metric"><div class="metric-val">' + pc + '</div><div class="metric-lbl">Positive</div></div>';
-
-  var tbody = document.getElementById('tbody');
-  tbody.innerHTML = '';
-
-  for (var i = 0; i < celebs.length; i++) {
-    var c = celebs[i];
-    var isTop = i < 3;
-    var p = c.sentiment.positive, n = c.sentiment.neutral, g = c.sentiment.negative;
-    var arts = c.articles;
-    var coverageLabel = p > g ? 'Positive' : g > p ? 'Negative' : 'Neutral';
-    var coverageClass = p > g ? 'pill pill-p' : g > p ? 'pill pill-g' : 'pill pill-n';
-    var expandId = 'expand-' + i;
-
-    var tr = document.createElement('tr');
-    tr.style.animationDelay = (i * 30) + 'ms';
-    tr.innerHTML =
-      '<td class="rank' + (isTop ? ' top' : '') + '">' + (i + 1) + '</td>' +
-      '<td class="name"><div>' + c.name + '</div><div class="name-sub">' + arts.length + ' article' + (arts.length !== 1 ? 's' : '') + '</div></td>' +
-      '<td class="mentions">' + c.mentions + '</td>' +
-      '<td class="bar-cell"><div class="mini-bar"><div class="mb-p" style="flex:' + p + '"></div><div class="mb-n" style="flex:' + n + '"></div><div class="mb-g" style="flex:' + g + '"></div></div></td>' +
-      '<td class="sent"><span class="' + coverageClass + '">' + coverageLabel + '</span></td>' +
-      '<td><button class="toggle-btn" onclick="toggleRow(\'' + expandId + '\',this)">Articles</button></td>';
-    tbody.appendChild(tr);
-
-    var artHTML = '';
-    for (var j = 0; j < arts.length; j++) {
-      artHTML += '<div class
+</body>
+</html>
